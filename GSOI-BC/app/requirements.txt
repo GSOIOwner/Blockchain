@@ -1,0 +1,14 @@
+kafka-python
+datime
+json
+fastapi
+starlette.responses
+pydantic
+uvicorn
+uuid
+threading
+time
+random
+pycrypto
+base58
+requests
