@@ -14,4 +14,6 @@ class Transaction:
         self.workTime = workTime
         self.upTime = upTime
         self.signature = signature
+        # Maybe create a becomingValidator here, so we know when it's a validators transaction (creation of a node).
+        #self.becomingValidator = becomingValidator
 

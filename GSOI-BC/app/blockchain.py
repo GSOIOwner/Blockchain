@@ -19,7 +19,8 @@ class Blockchain:
         if isValidBlock:
             self.chain.append(newBlock)
             #Blockchain.publishKafka(newBlock)
-            
+    
+    # TODO: WE DONT PUBLISH TO KAFKA ANYMORE 
     def publishKafka(newBlock):
         producer.send('updateNodes3', json.dumps(newBlock.toJson()).encode('utf-8'))
 

@@ -101,6 +101,10 @@ def read_root(address: str):
 
     return json
 
+# TODO:   
+# Este metodo desaparece, penso que pode é ser criado, como dito no Transaction.py, uma variavel no Transaction "BecomingValidator" para identificar que foi uma transação usada para se tornar validator/(nó).
+# Ficamos apenas assim com o método /transact
+
 @app.post("/becomeValidator")
 def read_root(data: ValidatorFastAPI):
     # Entra na lista de validadores
@@ -123,10 +127,12 @@ def read_root(data: ValidatorFastAPI):
     newValidator = validator.Validator(data.address, data.amount)
 
     ## Adicionar esse objecto a uma lista de validadores
-    kafkaPublisher.publishKafkaValidatorNotVerified(newValidator)
+    #kafkaPublisher.publishKafkaValidatorNotVerified(newValidator)
 
     return data
 
+# TODO:
+# Não precisamos deste método, por agora, não sei se não vamos precisar de algo para verificar que o validador tem mesmo uma transação mas já não faz tão sentido (está tudo do nosso lado com terraform)
 def thread_verifyValidators():
     ## De 5 em 5 minutos vamos verificar os validadores
     while(True):
@@ -145,7 +151,9 @@ def thread_verifyValidators():
                 if(isValidatorAlreadyV == False):
                     convertedValidator.isVerified = True   
                     kafkaPublisher.publishKafkaValidatorVerified(convertedValidator)
-                         
+
+# TODO: 
+# Não precisamos deste método                         
 def hasTransactionForValidator(validator):
     for block in CurrentBlockchain.chain:
             for transaction in block.transactions:
@@ -155,6 +163,8 @@ def hasTransactionForValidator(validator):
 
     return False
 
+# TODO: 
+# Não precisamos deste método
 def isValidatorAlreadyVerified(validatorToVerify):
     consumer = KafkaConsumer('updateValidatorVerified', auto_offset_reset='earliest',
      consumer_timeout_ms=5000)
@@ -171,6 +181,11 @@ def isValidatorAlreadyVerified(validatorToVerify):
 
 x = threading.Thread(target=thread_verifyValidators, args=(), daemon=True)
 x.start()
+
+# TODO: 
+# Necessário ir buscar ao ficheiro a lista de validadores (nós)
+# Necessário adaptar o algoritmo, embora esteja um bom algoritmo pensando agora a longo prazo, vai ser dificil com milhões de transações escolher um validator, podemos pensar num "index" mas mais simples.
+# Necessário chamar esse validator para validar os blocos na pool atuais
 
 def thread_chooseValidators():
     ## De 5 em 5 minutos vamos escolher um validator
@@ -245,12 +260,14 @@ y.start()
 # x = threading.Thread(target=thread_subscriber, args=(), daemon=True)
 # x.start()
 
+# TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
     convertedValidator = validator.Validator(
         "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
         ,1000.0
         ,True
         ) 
+
     kafkaPublisher.publishKafkaValidatorVerified(convertedValidator)
 
 init()
