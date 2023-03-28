@@ -2,7 +2,6 @@ from cmd import PROMPT
 from fastapi import FastAPI, Request
 from starlette.responses import RedirectResponse
 from pydantic import BaseModel
-from kafka import KafkaConsumer
 import uvicorn 
 import blockchain
 import uuid
@@ -12,16 +11,16 @@ import wallet
 import transaction
 import transactionPool
 import cryptoHash
-import kafkaPublisher
+import peer_synchronizer
 import validator
 import time
 import random
 
 app = FastAPI()
 
-CurrentBlockchain = blockchain.Blockchain()
-blockchainOwner = wallet.initialize_wallet()
-Wallet = wallet.initialize_wallet()
+#CurrentBlockchain = blockchain.Blockchain()
+#blockchainOwner = wallet.initialize_wallet()
+#Wallet = wallet.initialize_wallet()
 
 #print ("Wallet", Wallet.publicKey)
 currentTransacionPool = transactionPool.TransactionPool()
@@ -131,63 +130,13 @@ def read_root(data: ValidatorFastAPI):
 
     return data
 
-# TODO:
-# Não precisamos deste método, por agora, não sei se não vamos precisar de algo para verificar que o validador tem mesmo uma transação mas já não faz tão sentido (está tudo do nosso lado com terraform)
-def thread_verifyValidators():
-    ## De 5 em 5 minutos vamos verificar os validadores
-    while(True):
-        time.sleep(10)
-        consumer = KafkaConsumer('updateValidatorNotVerified', 
-         auto_offset_reset='earliest', consumer_timeout_ms=5000)
-        
-        #print('After consumer updateValidatorNotVerified', flush=True)
-        for message in consumer:
-            validatorFromJson = json.loads(message.value)
-            convertedValidator = validator.Validator(validatorFromJson['Address'], validatorFromJson['amount'])
-            
-            hasTransactionForV = hasTransactionForValidator(convertedValidator)
-            if(hasTransactionForV == True):
-                isValidatorAlreadyV = isValidatorAlreadyVerified(convertedValidator)
-                if(isValidatorAlreadyV == False):
-                    convertedValidator.isVerified = True   
-                    kafkaPublisher.publishKafkaValidatorVerified(convertedValidator)
-
-# TODO: 
-# Não precisamos deste método                         
-def hasTransactionForValidator(validator):
-    for block in CurrentBlockchain.chain:
-            for transaction in block.transactions:
-                if(transaction.toAddress == "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=" 
-                and transaction.fromAddress == validator.Address):
-                    return True
-
-    return False
-
-# TODO: 
-# Não precisamos deste método
-def isValidatorAlreadyVerified(validatorToVerify):
-    consumer = KafkaConsumer('updateValidatorVerified', auto_offset_reset='earliest',
-     consumer_timeout_ms=5000)
-    
-    for message in consumer:
-        validatorVerified = json.loads(message.value)
-        convertedVerifiedValidator = validator.Validator(validatorVerified['Address'],
-         validatorVerified['amount'])
-
-        if(convertedVerifiedValidator.Address == validatorToVerify.Address):
-            return True
-
-    return False
-
-x = threading.Thread(target=thread_verifyValidators, args=(), daemon=True)
-x.start()
 
 # TODO: 
 # Necessário ir buscar ao ficheiro a lista de validadores (nós)
 # Necessário adaptar o algoritmo, embora esteja um bom algoritmo pensando agora a longo prazo, vai ser dificil com milhões de transações escolher um validator, podemos pensar num "index" mas mais simples.
 # Necessário chamar esse validator para validar os blocos na pool atuais
 
-def thread_chooseValidators():
+"""def thread_chooseValidators():
     ## De 5 em 5 minutos vamos escolher um validator
     validators = []
     maxStakingAmount = 0
@@ -240,36 +189,20 @@ def thread_chooseValidators():
             currentTransacionPool.validateTransactions(CurrentBlockchain, validValidators.Address)
     ########## Confirmar o Validador ############
     
-    
+    """
 
-y = threading.Thread(target=thread_chooseValidators, args=(), daemon=True)
-y.start()
+#y = threading.Thread(target=thread_chooseValidators, args=(), daemon=True)
+#y.start()
 
 
-# def thread_subscriber():
-#     print("Thread stared")
-#     consumer = KafkaConsumer('updateNodes3', group_id='204', auto_offset_reset='earliest')
-#     for msg in consumer:
-#         block = json.loads(msg.value)
-#         convertedTransaction = transaction.Transaction(block['fromAddress'], block['toAddress'],
-#          block['amount'], block['timestamp'], block['originNode'], block['hydrogen'],
-#          block['units'], block['workTime'], block['upTime'])
-#         #print("ConvertedBLock", convertedBLock.__dict__)
-#         currentTransacionPool.addTransaction(convertedTransaction)
-
-# x = threading.Thread(target=thread_subscriber, args=(), daemon=True)
-# x.start()
 
 # TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
-    convertedValidator = validator.Validator(
-        "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
-        ,1000.0
-        ,True
-        ) 
-
-    kafkaPublisher.publishKafkaValidatorVerified(convertedValidator)
-
+    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer.Save_IP()
+    time.sleep(10)
+    peer.Download_IP()
+    
 init()
 
 if __name__ == "__main__":

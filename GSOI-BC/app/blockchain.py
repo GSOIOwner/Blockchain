@@ -2,9 +2,6 @@ import block
 import hashlib
 import json
 from datetime import datetime
-from kafka import KafkaProducer
-
-producer = KafkaProducer(bootstrap_servers='localhost:9092')
 
 class Blockchain:
     def __init__(self):
@@ -20,9 +17,8 @@ class Blockchain:
             self.chain.append(newBlock)
             #Blockchain.publishKafka(newBlock)
     
-    # TODO: WE DONT PUBLISH TO KAFKA ANYMORE 
-    def publishKafka(newBlock):
-        producer.send('updateNodes3', json.dumps(newBlock.toJson()).encode('utf-8'))
+    # TODO: save blockchain
+    
 
     
     
