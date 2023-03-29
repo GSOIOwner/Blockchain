@@ -21,9 +21,9 @@ class peer_synchronizer:
   def __init__(self,IP,PORT):
     self.rendezvous=(IP,PORT)
   
-  def connect_socket(self):
+  def connect_socket(self,IP='0.0.0.0',PORT=0):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.sock.bind(('0.0.0.0', 0))
+    self.sock.bind((IP, PORT))
 
   def Save_IP(self):
     self.connect_socket()
@@ -40,4 +40,12 @@ class peer_synchronizer:
     f=open(file, "wb")
     data = self.sock.recv(1024)
     f.write(data)
+    self.sock.close()
+  
+  def Download_blockchain(self):
+    self.connect_socket()
+    self.sock.connect(('192.168.1.53',9000)) #isto esta hardcoded, tem de ser dinamico dado o ficheiro que recebemos com os IPs
+    self.sock.send(b'Send')
+    msg=self.sock.recv(1024)
+    print(msg)
     self.sock.close()

@@ -15,6 +15,7 @@ import peer_synchronizer
 import validator
 import time
 import random
+import socket
 
 app = FastAPI()
 
@@ -194,14 +195,38 @@ def read_root(data: ValidatorFastAPI):
 #y = threading.Thread(target=thread_chooseValidators, args=(), daemon=True)
 #y.start()
 
+def thread_send_blockchain_peers():
+    server=peer_synchronizer.peer_synchronizer("192.168.1.53",1234) #o metodo init nao devia de ser assim
+    server.connect_socket(socket.gethostbyname(socket.gethostname()),9000)
+    print(server.sock.listen())
+    while True:
+        conn, address = server.sock.accept()
+        data=conn.recv(1024)
+        print(data)
+        if data==b'Send': # falta comprimir o ficheiro 
+            f=open("dummy_chain.txt","rb")
+            data=f.read()
+            print(data)
+            conn.send(data)
+            msg=conn.recv(1024)
+            print(msg)
+            f.close
+            conn.close()
 
 
 # TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
     peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
-    peer.Save_IP()
-    time.sleep(10)
-    peer.Download_IP()
+    #peer.Save_IP()
+    #time.sleep(10)
+    #peer.Download_IP()
+    peer.Download_blockchain()
+    """
+    y = threading.Thread(target=thread_send_blockchain_peers, args=(), daemon=True)
+    y.start()
+    while True:
+       time.sleep(1)
+    """
     
 init()
 
