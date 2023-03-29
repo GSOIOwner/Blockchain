@@ -34,7 +34,7 @@ class Block:
 
         return hashed_string
 
-    def isValidBlock( chain, transactions, hash):
+    def isValidBlock(chain, transactions, hash):
         if transactions is not None and hash != chain[len(chain)-1].hash:
                 return True
 
@@ -48,14 +48,15 @@ class Block:
         return newBlockToJson
 
     def getGenesis():
-        newMsg = cryptoHash.CryptoHash.joinTransaction("p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=",
-         "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=",
+        ownerAddress = wallet.getOwnerAddress()
+        newMsg = cryptoHash.CryptoHash.joinTransaction(ownerAddress,
+         ownerAddress,
          369369369)
 
-        signature = wallet.Owner.sign(newMsg, "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=")
+        signature = wallet.Owner.sign(newMsg, ownerAddress)
 
         newTransaction = transaction.Transaction(fromAddress="start",
-        toAddress="p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=", amount=369369369,
-        signature= signature)
+        toAddress = ownerAddress, amount = 369369369,
+        signature = signature)
 
         return Block(datetime.now(), "lastHash", "hash-one", [newTransaction])

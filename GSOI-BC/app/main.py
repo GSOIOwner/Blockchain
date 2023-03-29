@@ -19,12 +19,11 @@ import socket
 
 app = FastAPI()
 
-#CurrentBlockchain = blockchain.Blockchain()
-#blockchainOwner = wallet.initialize_wallet()
-#Wallet = wallet.initialize_wallet()
-
-#print ("Wallet", Wallet.publicKey)
+CurrentBlockchain = blockchain.Blockchain()
 currentTransacionPool = transactionPool.TransactionPool()
+
+nodeAddress = "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
+ownerAddress = wallet.getOwnerAddress()
 
 class TransactionFastAPI(BaseModel):
     fromAddress : str 
@@ -227,6 +226,9 @@ def init():
     while True:
        time.sleep(1)
     """
+
+    #Get Owner Wallet Address
+    #Get Own Wallet Address
     
 init()
 

@@ -13,10 +13,6 @@ class Owner:
         self.public_key = public_key
         self.bitcoin_address = bitcoin_address
 
-    # def sign(self, msg):
-    #         hash = SHA256.new(msg)
-    #         signature = pkcs1_15.new(self.private_key).sign(hash)
-    #         return binascii.hexlify(signature).decode("utf-8")
     def sign(msg, address):
             ploads = {'Address': address, 'message': msg}
             r = requests.get('https://localhost:7084/api/Signatures/CreateSignature', params=ploads, verify=False)
@@ -41,17 +37,6 @@ def calculate_hash(data, hash_function: str = "sha256"):
         h = RIPEMD160.new()
         h.update(data)
         return h.hexdigest()
-
-# def validate_signature(public_key: bytes, signature: bytes, msg):
-#     hash = SHA256.new(msg)
-#     signatureToenconde = binascii.unhexlify(signature)
-#     public_key_object = RSA.import_key(public_key)
-#     try:
-#         verifier = pkcs1_15.new(public_key_object)
-#         verifier.verify(hash, signatureToenconde)
-#         return True
-#     except:
-#         return False
         
 def validate_signature(Address, message, signature):
     ploads = {'Address': Address, 'message': message, 'signature': signature}
@@ -60,4 +45,7 @@ def validate_signature(Address, message, signature):
         return True
     else:
         return False
-    
+
+def getOwnerAddress():
+    r = requests.get('https://localhost:7084/api/SmartContract/GetTokenOwner', verify=False)
+    return r.text

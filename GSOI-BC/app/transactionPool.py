@@ -16,13 +16,15 @@ class TransactionPool:
         self.transaction_pool.clear()
 
     def getTransactionForValidator(self, address):
+        nodeAddress = "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
+        
         if(len(self.transaction_pool) != 0):
-            newMsg = cryptoHash.CryptoHash.joinTransaction("p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=",
+            newMsg = cryptoHash.CryptoHash.joinTransaction(nodeAddress,
              address, 50)
 
-            signature = wallet.Owner.sign(newMsg, "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=")
+            signature = wallet.Owner.sign(newMsg, nodeAddress)
 
-            newTransaction = transaction.Transaction(fromAddress = "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=",
+            newTransaction = transaction.Transaction(fromAddress = nodeAddress,
             toAddress = address, amount = 50, signature = signature)
             
             return newTransaction
