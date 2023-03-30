@@ -17,26 +17,6 @@ class Owner:
             ploads = {'Address': address, 'message': msg}
             r = requests.get('https://localhost:7084/api/Signatures/CreateSignature', params=ploads, verify=False)
             return r.text
-
-def initialize_wallet():
-    private_key = RSA.generate(2048)
-    public_key = private_key.publickey().export_key()
-    hash_1 = calculate_hash(public_key, hash_function="sha256")
-    hash_2 = calculate_hash(hash_1, hash_function="ripemd160")
-    bitcoin_address = base58.b58encode(hash_2)
-    return Owner(private_key, public_key, bitcoin_address)
-
-def calculate_hash(data, hash_function: str = "sha256"):
-    if type(data) == str:
-        data = bytearray(data, "utf-8")
-    if hash_function == "sha256":
-        h = SHA256.new()
-        h.update(data)
-        return h.hexdigest()
-    if hash_function == "ripemd160":
-        h = RIPEMD160.new()
-        h.update(data)
-        return h.hexdigest()
         
 def validate_signature(Address, message, signature):
     ploads = {'Address': Address, 'message': message, 'signature': signature}

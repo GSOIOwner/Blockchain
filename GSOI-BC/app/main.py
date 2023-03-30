@@ -132,22 +132,23 @@ def read_root(data: ValidatorFastAPI):
 
 @app.get("/Save_IP")
 def read_root():
-    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer=peer_synchronizer.peer_synchronizer("192.168.1.69",1234)
     peer.Save_IP()
     #idk se queres imprimir aqui algo tipo "done"
     return 
 
 @app.get("/Download_IP")
 def read_root():
-    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer=peer_synchronizer.peer_synchronizer("192.168.1.69",1234)
     peer.Download_IP()
     return 
 
 @app.get("/Get_chain")
 def read_root():
-    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer=peer_synchronizer.peer_synchronizer("192.168.1.69",1234)
     peer.Download_blockchain()
     return
+
 # TODO: 
 # Necessário ir buscar ao ficheiro a lista de validadores (nós)
 # Necessário adaptar o algoritmo, embora esteja um bom algoritmo pensando agora a longo prazo, vai ser dificil com milhões de transações escolher um validator, podemos pensar num "index" mas mais simples.
@@ -212,8 +213,8 @@ def read_root():
 #y.start()
 
 def thread_send_blockchain_peers():
-    server=peer_synchronizer.peer_synchronizer("192.168.1.53",1234) #o metodo init nao devia de ser assim
-    server.connect_socket(socket.gethostbyname(socket.gethostname()),9000)
+    server=peer_synchronizer.peer_synchronizer() 
+    server.connect_socket(socket.gethostbyname(socket.gethostname()),9001)
     print(server.sock.listen())
     while True:
         conn, address = server.sock.accept()
@@ -232,7 +233,7 @@ def thread_send_blockchain_peers():
 
 # TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
-    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer = peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
     #peer.Save_IP()
     #time.sleep(10)
     #peer.Download_IP()
@@ -245,11 +246,4 @@ def init():
 init()
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=5000, host="127.0.0.1")
-
-# @app.post("/block")
-# def read_root(data: Transaction):
-#     newBlockData = Data(data.fromAddress, data.toAddress, data.amount, data.timestamp, data.originNode, data.hydrogen, data.units, data.workTime, data.upTime)
-#     #print(newBlockData.__dict__)
-#     CurrentBlockchain.addBlock(newBlockData)
-#     return RedirectResponse("/blocks", status_code=303)
+    uvicorn.run(app, port=6000, host="127.0.0.1")

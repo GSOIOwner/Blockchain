@@ -59,4 +59,12 @@ class Block:
         toAddress = ownerAddress, amount = 369369369,
         signature = signature)
 
-        return Block(datetime.now(), "lastHash", "hash-one", [newTransaction])
+        firstBlock = Block(datetime.now(), "lastHash", "hash-one", [newTransaction])
+        
+        firstBlock_Json = firstBlock.toJson()
+
+        f=open("dummy_chain.txt", "ab")
+        data = json.dumps(firstBlock_Json)
+        f.write(data.encode("utf-8") + "\n".encode("utf-8"))
+        
+        return firstBlock

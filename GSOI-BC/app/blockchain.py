@@ -15,7 +15,9 @@ class Blockchain:
         
         if isValidBlock:
             self.chain.append(newBlock)
-            #Blockchain.publishKafka(newBlock)
+            f=open("dummy_chain.txt", "ab")
+            data = newBlock.__dict__
+            f.write(data)
     
     # TODO: save blockchain
     

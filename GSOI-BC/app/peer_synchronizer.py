@@ -18,7 +18,7 @@ import time
 # rendezvous = (environment_IP, int(environment_OP)) #ip local do servidor,para usar o externo temos de fazer router stuff
 
 class peer_synchronizer:
-  def __init__(self,IP,PORT):
+  def __init__(self,IP="0.0.0.0",PORT=0):
     self.rendezvous=(IP,PORT)
   
   def connect_socket(self,IP='0.0.0.0',PORT=0):
@@ -44,8 +44,9 @@ class peer_synchronizer:
   
   def Download_blockchain(self):
     self.connect_socket()
-    self.sock.connect(('192.168.1.53',9000)) #TODO:isto esta hardcoded, tem de ser dinamico dado o ficheiro que recebemos com os IPs
+    self.sock.connect(('192.168.1.69',9000)) #TODO:isto esta hardcoded, tem de ser dinamico dado o ficheiro que recebemos com os IPs
     self.sock.send(b'Send')
     msg=self.sock.recv(1024)
     print(msg)
+    self.sock.send(b'Chain received')
     self.sock.close()
