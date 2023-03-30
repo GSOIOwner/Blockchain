@@ -130,7 +130,24 @@ def read_root(data: ValidatorFastAPI):
 
     return data
 
+@app.get("/Save_IP")
+def read_root():
+    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer.Save_IP()
+    #idk se queres imprimir aqui algo tipo "done"
+    return 
 
+@app.get("/Download_IP")
+def read_root():
+    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer.Download_IP()
+    return 
+
+@app.get("/Get_chain")
+def read_root():
+    peer=peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
+    peer.Download_blockchain()
+    return
 # TODO: 
 # Necessário ir buscar ao ficheiro a lista de validadores (nós)
 # Necessário adaptar o algoritmo, embora esteja um bom algoritmo pensando agora a longo prazo, vai ser dificil com milhões de transações escolher um validator, podemos pensar num "index" mas mais simples.
@@ -202,7 +219,7 @@ def thread_send_blockchain_peers():
         conn, address = server.sock.accept()
         data=conn.recv(1024)
         print(data)
-        if data==b'Send': # falta comprimir o ficheiro 
+        if data==b'Send': # TODO: falta comprimir o ficheiro 
             f=open("dummy_chain.txt","rb")
             data=f.read()
             print(data)
@@ -219,14 +236,9 @@ def init():
     #peer.Save_IP()
     #time.sleep(10)
     #peer.Download_IP()
-    peer.Download_blockchain()
-    """
+    #peer.Download_blockchain()
     y = threading.Thread(target=thread_send_blockchain_peers, args=(), daemon=True)
     y.start()
-    while True:
-       time.sleep(1)
-    """
-
     #Get Owner Wallet Address
     #Get Own Wallet Address
     

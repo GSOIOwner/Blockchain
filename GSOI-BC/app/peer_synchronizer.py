@@ -44,7 +44,7 @@ class peer_synchronizer:
   
   def Download_blockchain(self):
     self.connect_socket()
-    self.sock.connect(('192.168.1.53',9000)) #isto esta hardcoded, tem de ser dinamico dado o ficheiro que recebemos com os IPs
+    self.sock.connect(('192.168.1.53',9000)) #TODO:isto esta hardcoded, tem de ser dinamico dado o ficheiro que recebemos com os IPs
     self.sock.send(b'Send')
     msg=self.sock.recv(1024)
     print(msg)

@@ -1,6 +1,0 @@
-kafka-api-teste1:
-    build: ./app1/
-    image: kafka-api-producer1:v1
-    container_name: kafka-api-producer1
-    ports:
-      - "5000:5000"

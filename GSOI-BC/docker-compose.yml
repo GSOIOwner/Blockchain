@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+    blockchain_node:
+        build: ./app/
+        image: blockchain_node
+        container_name: blockchain_node
+        #network_mode: host
+        ports:
+          - "5000:5000"
