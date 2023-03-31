@@ -24,7 +24,7 @@ app = FastAPI()
 CurrentBlockchain = blockchain.Blockchain()
 currentTransacionPool = transactionPool.TransactionPool()
 
-nodeAddress = os.getenv('nodeAddress')
+nodeAddress = "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
 ownerAddress = wallet.getOwnerAddress()
 
 class TransactionFastAPI(BaseModel):
@@ -134,20 +134,20 @@ def read_root(data: ValidatorFastAPI):
 
 @app.get("/Save_IP")
 def read_root():
-    peer=peer_synchronizer.peer_synchronizer(os.getenv('IP'),os.getenv('Port'))
+    peer=peer_synchronizer.peer_synchronizer(socket.gethostbyname(socket.gethostname()),1234)
     peer.Save_IP()
     #idk se queres imprimir aqui algo tipo "done"
     return 
 
 @app.get("/Download_IP")
 def read_root():
-    peer=peer_synchronizer.peer_synchronizer(os.getenv('IP'),os.getenv('Port'))
+    peer=peer_synchronizer.peer_synchronizer(socket.gethostbyname(socket.gethostname()),1234)
     peer.Download_IP()
     return 
 
 @app.get("/Get_chain")
 def read_root():
-    peer=peer_synchronizer.peer_synchronizer(os.getenv('IP'),os.getenv('Port'))
+    peer=peer_synchronizer.peer_synchronizer(socket.gethostbyname(socket.gethostname()),9000)
     peer.Download_blockchain()
     file=open('dummy_chain.txt',"r")
     data=file.read()
@@ -250,4 +250,4 @@ def init():
 init()
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=int(os.getenv('API_PORT')), host='0.0.0.0')
+    uvicorn.run(app, port=5000, host="127.0.0.1")

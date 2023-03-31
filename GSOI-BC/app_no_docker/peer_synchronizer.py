@@ -50,6 +50,7 @@ class peer_synchronizer:
     self.connect_socket()
     lines = open('IPs.txt').read().splitlines()
     myline =random.choice(lines)
+    print(myline)
     self.sock.connect((myline,9000))
     self.sock.send(b'Send') #TODO: enviar que parte da blockchain vamos querer receber
     msg=self.sock.recv(1024)

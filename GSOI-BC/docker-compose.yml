@@ -1,10 +1,32 @@
 version: '3.4'
 
 services:
-    blockchain_node:
-        build: ./app/
-        image: blockchain_node
-        container_name: blockchain_node
-        #network_mode: host
-        ports:
-          - "5000:5000"
+ app_sandbox:
+    image: alpine
+    command: sleep infinity
+    ports:
+      - "9000:9000"
+      - "5000:5000"
+      - "5001:5001" 
+ blockchain_node1:
+    network_mode: "service:app_sandbox"
+    build: ./app/
+    image: blockchain_node
+    container_name: blockchain_node1
+    environment:
+      IP: '192.168.1.58'
+      Port: 1234
+      API_PORT: 5000
+      Server_Port: 9000
+      nodeAddress: "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
+ blockchain_node2:
+    network_mode: "service:app_sandbox"
+    build: ./app/
+    image: blockchain_node
+    container_name: blockchain_node2
+    environment:
+      IP: '192.168.1.58'
+      Port: 1234
+      Server_Port: 9000
+      API_PORT: 5001
+      nodeAddress: "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
