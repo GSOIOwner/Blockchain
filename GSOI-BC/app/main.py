@@ -235,6 +235,24 @@ def thread_send_blockchain_peers():
             conn.close()
 
 
+def thread_choose_validator(): #TODO: complete it
+    lines = open('IPs.txt').read().splitlines()
+    myline =random.choice(lines)
+    client=peer_synchronizer()
+    while True:
+        conn, address = server.sock.accept()
+        data=conn.recv(1024)
+        print(data)
+        if data==b'Send': # TODO: falta comprimir o ficheiro 
+            f=open("dummy_chain.txt","rb")
+            data=f.read()
+            print(data)
+            conn.send(data)
+            msg=conn.recv(1024)
+            print(msg)
+            f.close
+            conn.close()
+
 # TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
     #peer = peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
