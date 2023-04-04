@@ -20,7 +20,7 @@ import random
 
 class peer_synchronizer:
   def __init__(self,IP="0.0.0.0",PORT=0):
-    self.rendezvous=(IP,PORT)
+    self.rendezvous=(IP,int(PORT))
   
   def connect_socket(self,IP='0.0.0.0',PORT=0):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,17 +40,18 @@ class peer_synchronizer:
     self.connect_socket()
     self.sock.connect(self.rendezvous)
     self.sock.send(b'Download_IP')
-    file = "IPs"
+    file = "IPs.txt"
     f=open(file, "wb")
     data = self.sock.recv(1024)
     f.write(data)
+    print(data, flush=True)
     self.sock.close()
   
   def Download_blockchain(self):
     self.connect_socket()
     lines = open('IPs.txt').read().splitlines()
     myline =random.choice(lines)
-    self.sock.connect((myline,9000))
+    self.sock.connect((myline.split(":")[0],9000))
     self.sock.send(b'Send') #TODO: enviar que parte da blockchain vamos querer receber
     msg=self.sock.recv(1024)
     f=open("dummy_chain.txt",'wb')

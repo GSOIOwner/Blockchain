@@ -11,7 +11,10 @@ class TransactionPool:
 
     def addTransaction(self, transaction):
         self.transaction_pool.append(transaction)
-
+    
+    def to_dict(self):
+        return {'transaction_pool': [transaction.to_dict() for transaction in self.transaction_pool]}
+    
     def clear(self):
         self.transaction_pool.clear()
 

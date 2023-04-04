@@ -14,18 +14,20 @@ services:
     image: blockchain_node
     container_name: blockchain_node1
     environment:
-      IP: '192.168.1.58'
+      IP: '192.168.1.69'
       Port: 1234
       API_PORT: 5000
       Server_Port: 9000
       nodeAddress: "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw="
  blockchain_node2:
+    depends_on: 
+        - blockchain_node1
     network_mode: "service:app_sandbox"
     build: ./app/
     image: blockchain_node
     container_name: blockchain_node2
     environment:
-      IP: '192.168.1.58'
+      IP: '192.168.1.69'
       Port: 1234
       Server_Port: 9000
       API_PORT: 5001

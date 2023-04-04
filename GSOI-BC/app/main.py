@@ -46,7 +46,6 @@ class WalletBalance(BaseModel):
     address : str
 
 class TransactionPoolPayload(BaseModel):
-    address: str
     transaction_pool: list
 
 @app.get("/")
@@ -78,13 +77,6 @@ def read_root(data: TransactionFastAPI):
 @app.get("/transactionPool")
 def read_root():
     return currentTransacionPool.getTransactionPool()
-
-@app.post("/mine-transactions")
-def read_root(address: str):
-    # Em vez de minarmos as transações o kafka vai defenir um endereço que esteja em staking para validar a transaçãoç
-    currentTransacionPool.validateTransactions(CurrentBlockchain)
-    #currentTransacionPool.clear()
-    return RedirectResponse("/blocks", status_code=303)
 
 @app.get("/wallet-info")
 def read_root(address: str):
@@ -139,7 +131,7 @@ def read_root(data: ValidatorFastAPI):
 # POST method to receive and update transaction pool
 @app.post('/api/transaction_pool')
 async def receiveTransactionPool(payload: TransactionPoolPayload):
-    address = payload.address
+    print('Received Transaction Pool: ', payload.transaction_pool)
     new_transaction_pool = payload.transaction_pool
 
     # Verify the authenticity of the payload by checking the address
@@ -147,8 +139,10 @@ async def receiveTransactionPool(payload: TransactionPoolPayload):
 
     # Update the transaction pool with the new transactions
     currentTransacionPool.transaction_pool = new_transaction_pool
-    currentTransacionPool.validateTransactions(CurrentBlockchain)
-    
+
+    print('Going to validated Transactions')
+    currentTransacionPool.validateTransactions(CurrentBlockchain, nodeAddress)
+
     return {'message': 'Transaction pool updated successfully'}
 
 @app.get("/Save_IP")
@@ -172,65 +166,7 @@ def read_root():
     data=file.read()
     return data 
 
-# TODO: 
-# Necessário ir buscar ao ficheiro a lista de validadores (nós)
-# Necessário adaptar o algoritmo, embora esteja um bom algoritmo pensando agora a longo prazo, vai ser dificil com milhões de transações escolher um validator, podemos pensar num "index" mas mais simples.
-# Necessário chamar esse validator para validar os blocos na pool atuais
 
-"""def thread_chooseValidators():
-    ## De 5 em 5 minutos vamos escolher um validator
-    validators = []
-    maxStakingAmount = 0
-    while(True):
-        time.sleep(20)
-    ## Buscar ao topico todos os verificados
-        consumer = KafkaConsumer('updateValidatorVerified', auto_offset_reset='earliest',
-        consumer_timeout_ms=5000)
-    
-    ## Obter todos os validadores eligiveis e o max staking amount
-        for message in consumer:
-            validatorFromJson = json.loads(message.value)
-            convertedValidator = validator.Validator(validatorFromJson['Address'], validatorFromJson['amount'],
-             validatorFromJson['isVerified'], validatorFromJson['stakingIndex'], validatorFromJson['validatedTransactions'])
-
-            if(convertedValidator not in validators):
-                validators.append(convertedValidator)
-                maxStakingAmount += convertedValidator.amount
-
-    ## Calcular o Staking Index
-        maxTransactions = 0
-        for block in CurrentBlockchain.chain:
-            for transaction in block.transactions:
-                maxTransactions += 1
-
-        for validatorToCalculate in validators:
-            percentageTransactions = 0
-            percentageAmount = validatorToCalculate.amount / maxStakingAmount
-            
-            if(validatorToCalculate.validatedTransactions is not None):
-                percentageTransactions = validatorToCalculate.validatedTransactions / maxTransactions
-                
-            validatorToCalculate.stakingIndex = percentageAmount - percentageTransactions
-    
-    ## Escolher validador
-        validValidators = None
-        highestStakingIndex = 0
-        for validValidator in validators:
-            if(validValidator.stakingIndex >= highestStakingIndex):
-                validValidators = validValidator 
-                highestStakingIndex = validValidator.stakingIndex
-        
-        if(validValidators is None):
-            validValidators = random.choice(validators)
-
-    ## Validar transacoes 
-        print("Choosen Validator", validValidators.__dict__, flush= True)
-        if(currentTransacionPool.transaction_pool is not None and 
-         len(currentTransacionPool.transaction_pool) != 0):
-            currentTransacionPool.validateTransactions(CurrentBlockchain, validValidators.Address)
-    ########## Confirmar o Validador ############
-    
-    """
 
 #y = threading.Thread(target=thread_chooseValidators, args=(), daemon=True)
 #y.start()
@@ -254,24 +190,36 @@ def thread_send_blockchain_peers():
             conn.close()
 
 
-def thread_choose_validator(): #TODO: complete it
-    lines = open('IPs.txt').read().splitlines()
-    myline =random.choice(lines)
-    transaction_pool = currentTransacionPool
-    payload = { 'transaction_pool': transaction_pool}
-    headers = {'Content-Type': 'application/json'}
-    r = requests.post(f'https://{myline}/api/transaction_pool', data=json.dumps(payload), headers=headers)
-    return r.status_code == 200
+def thread_choose_validator(): #TODO: complete i
+    print('Insine thread_choose_validator...', flush=True)
+
+    while True:
+        print('Insine thread_choose_validator...', flush=True)
+        if(len(currentTransacionPool.transaction_pool) > 0):
+            lines = open('IPs.txt').read().splitlines()
+            myline =random.choice(lines)
+            print('Choosen IP: ', myline, flush=True)
+            transaction_pool = currentTransacionPool.to_dict()
+            print(transaction_pool, flush=True)
+            headers = {'Content-Type': 'application/json'}
+            r = requests.post(f'http://{myline}/api/transaction_pool', data=json.dumps(transaction_pool), headers=headers)
+            return r.status_code == 200
+
+        time.sleep(20)
 
 # TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
-    #peer = peer_synchronizer.peer_synchronizer("192.168.1.53",1234)
-    #peer.Save_IP()
-    #time.sleep(10)
-    #peer.Download_IP()
+    peer=peer_synchronizer.peer_synchronizer(os.getenv('IP'),os.getenv('Port'))
+    peer.Save_IP()
+    time.sleep(2)
+    peer.Download_IP()
+
     #peer.Download_blockchain()
     y = threading.Thread(target=thread_send_blockchain_peers, args=(), daemon=True)
     y.start()
+
+    z = threading.Thread(target=thread_choose_validator, args=(), daemon=True)
+    z.start()
     #Get Owner Wallet Address
     #Get Own Wallet Address
     

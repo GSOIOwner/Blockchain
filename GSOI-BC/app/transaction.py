@@ -17,3 +17,16 @@ class Transaction:
         # Maybe create a becomingValidator here, so we know when it's a validators transaction (creation of a node).
         #self.becomingValidator = becomingValidator
 
+    def to_dict(self):
+        return {
+            'fromAddress': self.fromAddress,
+            'toAddress': self.toAddress,
+            'amount': self.amount,
+            'timestamp': self.timestamp,
+            'originNode': self.originNode,
+            'hydrogen' : self.hydrogen,
+            'units' : self.units,
+            'workTime' : self.workTime,
+            'upTime' : self.upTime,
+            'signature' : self.signature
+        }
