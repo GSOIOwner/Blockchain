@@ -17,7 +17,7 @@ import time
 import random
 import socket
 import os
-
+import requests
 
 app = FastAPI()
 
@@ -44,6 +44,10 @@ class ValidatorFastAPI(BaseModel):
 
 class WalletBalance(BaseModel):
     address : str
+
+class TransactionPoolPayload(BaseModel):
+    address: str
+    transaction_pool: list
 
 @app.get("/")
 def read_root():
@@ -131,6 +135,21 @@ def read_root(data: ValidatorFastAPI):
     #kafkaPublisher.publishKafkaValidatorNotVerified(newValidator)
 
     return data
+
+# POST method to receive and update transaction pool
+@app.post('/api/transaction_pool')
+async def receiveTransactionPool(payload: TransactionPoolPayload):
+    address = payload.address
+    new_transaction_pool = payload.transaction_pool
+
+    # Verify the authenticity of the payload by checking the address
+    # ...
+
+    # Update the transaction pool with the new transactions
+    currentTransacionPool.transaction_pool = new_transaction_pool
+    currentTransacionPool.validateTransactions(CurrentBlockchain)
+    
+    return {'message': 'Transaction pool updated successfully'}
 
 @app.get("/Save_IP")
 def read_root():
@@ -238,20 +257,11 @@ def thread_send_blockchain_peers():
 def thread_choose_validator(): #TODO: complete it
     lines = open('IPs.txt').read().splitlines()
     myline =random.choice(lines)
-    client=peer_synchronizer()
-    while True:
-        conn, address = server.sock.accept()
-        data=conn.recv(1024)
-        print(data)
-        if data==b'Send': # TODO: falta comprimir o ficheiro 
-            f=open("dummy_chain.txt","rb")
-            data=f.read()
-            print(data)
-            conn.send(data)
-            msg=conn.recv(1024)
-            print(msg)
-            f.close
-            conn.close()
+    transaction_pool = currentTransacionPool
+    payload = { 'transaction_pool': transaction_pool}
+    headers = {'Content-Type': 'application/json'}
+    r = requests.post(f'https://{myline}/api/transaction_pool', data=json.dumps(payload), headers=headers)
+    return r.status_code == 200
 
 # TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
