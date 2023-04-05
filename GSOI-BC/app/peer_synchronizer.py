@@ -31,9 +31,14 @@ class peer_synchronizer:
 
   def Save_IP(self):
     self.connect_socket()
+    MyIP = os.getenv('IP')
+    myPort = os.getenv('API_PORT')
+    clientIP = MyIP+":"+myPort
     # -> client de testes, usar este para dar save do IP
     self.sock.connect(self.rendezvous)
     self.sock.send(b'Save_IP')
+    time.sleep(0.5)
+    self.sock.send(clientIP.encode('utf-8'))
     self.sock.close()
     
   def Download_IP(self):

@@ -4,7 +4,7 @@ class CryptoHash:
     def getHash(fromAddress, toAddress, amount, timestamp, originNode, 
      hydrogen, units, workTime, upTime):
         
-        transactionToString = CryptoHash.joinTransaction(fromAddress, toAddress, amount, timestamp, originNode, hydrogen, units, workTime, upTime)
+        transactionToString = CryptoHash.joinTransaction(fromAddress, toAddress, amount)
         # TRY TO DO A JOIN(' ')
         #print("Hash: " + transactionToString)
         #hashSHA256 = SHA256.new(bytes(transactionToString,'utf-8'))

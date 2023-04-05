@@ -15,9 +15,11 @@ class Blockchain:
         
         if isValidBlock:
             self.chain.append(newBlock)
+            block_Json = newBlock.toJson()
+            print("Printing BlockJson ", block_Json)
             f=open("dummy_chain.txt", "ab")
-            data = newBlock.__dict__
-            f.write(data)
+            data = json.dumps(block_Json)
+            f.write(data.encode("utf-8") + "\n".encode("utf-8"))
     
     # TODO: save blockchain
     

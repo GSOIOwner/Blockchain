@@ -9,6 +9,7 @@ import threading
 import json 
 import wallet
 import transaction
+from transaction import Transaction
 import transactionPool
 import cryptoHash
 import peer_synchronizer
@@ -18,8 +19,9 @@ import random
 import socket
 import os
 import requests
+from typing import List
 
-app = FastAPI()
+app = FastAPI(openapi_schema={"openapi": "3.0.0", "arbitrary_types_allowed": True})
 
 CurrentBlockchain = blockchain.Blockchain()
 currentTransacionPool = transactionPool.TransactionPool()
@@ -37,7 +39,8 @@ class TransactionFastAPI(BaseModel):
     units: str = None
     workTime : float = None# in hours
     upTime : str = None
-
+    signature = str 
+    
 class ValidatorFastAPI(BaseModel):
     address : str
     amount : float
@@ -46,7 +49,7 @@ class WalletBalance(BaseModel):
     address : str
 
 class TransactionPoolPayload(BaseModel):
-    transaction_pool: list
+    transaction_pool: List[TransactionFastAPI]
 
 @app.get("/")
 def read_root():
@@ -132,16 +135,22 @@ def read_root(data: ValidatorFastAPI):
 @app.post('/api/transaction_pool')
 async def receiveTransactionPool(payload: TransactionPoolPayload):
     print('Received Transaction Pool: ', payload.transaction_pool)
-    new_transaction_pool = payload.transaction_pool
+    new_transaction_pool = []
+
+    # Loop through each transaction in the payload and create a new Transaction object
+    for transaction_data in payload.transaction_pool:
+        transaction_dict = transaction_data.dict()
+        new_transaction = transaction.Transaction(**transaction_dict)
+        new_transaction_pool.append(new_transaction)
+
+    # Update the transaction pool with the new transactions
+    currentTransactionPool = transactionPool.TransactionPool(new_transaction_pool)
 
     # Verify the authenticity of the payload by checking the address
     # ...
 
-    # Update the transaction pool with the new transactions
-    currentTransacionPool.transaction_pool = new_transaction_pool
-
-    print('Going to validated Transactions')
-    currentTransacionPool.validateTransactions(CurrentBlockchain, nodeAddress)
+    print('Going to validate Transactions')
+    currentTransactionPool.validateTransactions(CurrentBlockchain, nodeAddress)
 
     return {'message': 'Transaction pool updated successfully'}
 
@@ -211,7 +220,7 @@ def thread_choose_validator(): #TODO: complete i
 def init():
     peer=peer_synchronizer.peer_synchronizer(os.getenv('IP'),os.getenv('Port'))
     peer.Save_IP()
-    time.sleep(2)
+    time.sleep(5)
     peer.Download_IP()
 
     #peer.Download_blockchain()

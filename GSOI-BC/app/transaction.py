@@ -30,3 +30,4 @@ class Transaction:
             'upTime' : self.upTime,
             'signature' : self.signature
         }
+    
