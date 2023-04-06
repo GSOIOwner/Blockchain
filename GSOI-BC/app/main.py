@@ -23,6 +23,7 @@ from typing import List
 
 app = FastAPI(openapi_schema={"openapi": "3.0.0", "arbitrary_types_allowed": True})
 
+max_socket=65000
 CurrentBlockchain = blockchain.Blockchain()
 currentTransacionPool = transactionPool.TransactionPool()
 
@@ -39,7 +40,7 @@ class TransactionFastAPI(BaseModel):
     units: str = None
     workTime : float = None# in hours
     upTime : str = None
-    signature = str 
+    signature: str 
     
 class ValidatorFastAPI(BaseModel):
     address : str
@@ -196,6 +197,15 @@ def thread_send_blockchain_peers():
             msg=conn.recv(1024)
             print(msg)
             f.close
+            conn.close()
+        if data==b'Update':
+            msg=conn.recv(max_socket)
+            print(msg)
+            f=open("dummy_chain.txt")
+            dummy_blockchain= json.load(f) # TODO: fazer a comparação do que recebemos com o que ja esta na chain, ver o codigo do jess
+            print(dummy_blockchain)
+            f.write(msg)
+            f.close()
             conn.close()
 
 

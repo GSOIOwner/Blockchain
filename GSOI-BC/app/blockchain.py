@@ -20,6 +20,7 @@ class Blockchain:
             f=open("dummy_chain.txt", "ab")
             data = json.dumps(block_Json)
             f.write(data.encode("utf-8") + "\n".encode("utf-8"))
+            
     
     # TODO: save blockchain
     
