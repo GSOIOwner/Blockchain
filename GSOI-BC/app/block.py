@@ -43,7 +43,7 @@ class Block:
                 'timestamp' : str(self.timestamp),
                  'lastHash' : self.lastHash,
                  'hash' : self.hash,
-                 'transactions' : json.dumps([obj.__dict__ for obj in self.transactions])
+                 'transactions' : [obj.__dict__ for obj in self.transactions]
                  }
         return newBlockToJson
 
@@ -62,9 +62,9 @@ class Block:
         firstBlock = Block(datetime.now(), "lastHash", "hash-one", [newTransaction])
         
         firstBlock_Json = firstBlock.toJson()
-
+        list_firstBlock_Json=[firstBlock.toJson()]
         f=open("dummy_chain.txt", "ab")
-        data = json.dumps(firstBlock_Json)
+        data = json.dumps(list_firstBlock_Json)
         f.write(data.encode("utf-8") + "\n".encode("utf-8"))
         
         return firstBlock

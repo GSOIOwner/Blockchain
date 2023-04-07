@@ -35,17 +35,9 @@ class TransactionPool:
     def checkValidTransactions(self, address):
         validTransactions = []
         for transaction in self.transaction_pool:
-            print("Inside check valid transactions")
-            print("FromAddress: ", transaction.fromAddress)
-            print("ToAddress: ", transaction.toAddress)
-            print("Amount: ", transaction.amount)
-            print("Signature: ", transaction.signature)
             msg = cryptoHash.CryptoHash.joinTransaction(transaction.fromAddress, transaction.toAddress,
                              transaction.amount)
-            print("Msg: ", msg)
-            print("Transaction Signature: ", transaction.signature)
             result = wallet.validate_signature(transaction.fromAddress, msg, transaction.signature)
-            print("Print Result Validate_Signature", result)
 
             if result is True:
                 validTransactions.append(transaction)

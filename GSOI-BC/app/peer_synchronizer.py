@@ -63,3 +63,14 @@ class peer_synchronizer:
     f.write(msg)
     self.sock.send(b'Chain received')
     self.sock.close()
+
+  def Send_last_block(self,IP,PORT):
+    self.connect_socket()
+    self.sock.connect((IP,9000))
+    self.sock.send(b'Update')
+    time.sleep(1)
+    f=open('dummy_chain.txt','rb')
+    dummy_chain= json.load(f)
+    data=dummy_chain[-1]
+    self.sock.send(json.dumps(data).encode("utf-8"))
+    self.sock.close()

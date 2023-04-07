@@ -4,6 +4,7 @@ from starlette.responses import RedirectResponse
 from pydantic import BaseModel
 import uvicorn 
 import blockchain
+import block
 import uuid
 import threading
 import json 
@@ -174,7 +175,13 @@ def read_root():
     peer.Download_blockchain()
     file=open('dummy_chain.txt',"r")
     data=file.read()
-    return data 
+    return data
+
+@app.get("/send_last_block")
+def read_root():
+        peer=peer_synchronizer.peer_synchronizer()
+        peer.Send_last_block(os.getenv('IP'),9000)
+        return 
 
 
 
@@ -199,15 +206,29 @@ def thread_send_blockchain_peers():
             f.close
             conn.close()
         if data==b'Update':
+            Already_exists=False
             msg=conn.recv(max_socket)
-            print(msg)
-            f=open("dummy_chain.txt")
+            f=open("dummy_chain.txt",'rb')
             dummy_blockchain= json.load(f) # TODO: fazer a comparação do que recebemos com o que ja esta na chain, ver o codigo do jess
-            print(dummy_blockchain)
-            f.write(msg)
             f.close()
-            conn.close()
+                       
+            msg=json.loads(msg.decode("utf-8"))
+            print("msg",flush=True)
+            timestamp = msg['timestamp']
+            lastHash = msg['lastHash']
+            hash = msg['hash']
+            transactions_data = msg['transactions']
 
+            # create a list of Transaction objects
+            transactions = []
+            for transaction_data in transactions_data:
+                data_transaction = transaction.Transaction(**transaction_data)
+                transactions.append(data_transaction)
+                
+            # create a Block object
+            block_msg = block.Block(timestamp, lastHash, hash, transactions)
+            CurrentBlockchain.sync_block(block_msg)
+            conn.close()
 
 def thread_choose_validator(): #TODO: complete i
     print('Insine thread_choose_validator...', flush=True)

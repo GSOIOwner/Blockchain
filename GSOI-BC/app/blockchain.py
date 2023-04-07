@@ -15,13 +15,25 @@ class Blockchain:
         
         if isValidBlock:
             self.chain.append(newBlock)
-            block_Json = newBlock.toJson()
-            print("Printing BlockJson ", block_Json)
-            f=open("dummy_chain.txt", "ab")
-            data = json.dumps(block_Json)
-            f.write(data.encode("utf-8") + "\n".encode("utf-8"))
+            to_write_dummy_chain=[]
+            for blocks in self.chain:
+                to_write_dummy_chain.append(blocks.toJson())
+            f=open("dummy_chain.txt", "wb")
+            data = json.dumps(to_write_dummy_chain)
+            f.write(data.encode("utf-8"))
             
-    
+    def sync_block(self, block_received):
+        isValid=block.Block.isValidBlock(self.chain,block_received.transactions, block_received.hash)
+        if isValid:
+            self.chain.append(block_received)
+            to_write_dummy_chain=[]
+            for blocks in self.chain:
+                to_write_dummy_chain.append(blocks.toJson())
+            f=open("dummy_chain.txt", "wb")
+            data = json.dumps(to_write_dummy_chain)
+            f.write(data.encode("utf-8"))
+        else:
+            print("Block already exists!",flush=True)
     # TODO: save blockchain
     
 
