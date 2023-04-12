@@ -1,22 +1,8 @@
 import json
 import socket
-import sys
-import threading
 import os
 import time
 import random
-
-# TODO:
-# This is all going down the hole.
-# Em homenagem eu renomeava esta classe para outra coisa mas deixava aqui um comentário RIP KAFKA.
-# Apagar tudo o que é de Kafka e criar sistema de sincronização com Client/Server TCP
-
-# RIP KAFKA
-
-# environment_IP=os.getenv('IP')
-# environment_OP=os.getenv('Port')
-
-# rendezvous = (environment_IP, int(environment_OP)) #ip local do servidor,para usar o externo temos de fazer router stuff
 
 class peer_synchronizer:
   def __init__(self,IP="0.0.0.0",PORT=0):
@@ -27,14 +13,13 @@ class peer_synchronizer:
     self.sock.bind((IP, PORT))
 
   def socker_server_creation(self,IP,PORT):
-    self.sock=socket.create_server((IP,PORT),family=socket.AF_INET,reuse_port=True) #nao funciona no windows, para funcionar retirar o reuse_port=true, e mudar o porto para cada servidor!
+    self.sock=socket.create_server((IP,PORT),family=socket.AF_INET,reuse_port=True) 
 
   def Save_IP(self):
     self.connect_socket()
     MyIP = os.getenv('IP')
     myPort = os.getenv('API_PORT')
     clientIP = MyIP+":"+myPort
-    # -> client de testes, usar este para dar save do IP
     self.sock.connect(self.rendezvous)
     self.sock.send(b'Save_IP')
     time.sleep(0.5)
@@ -57,7 +42,7 @@ class peer_synchronizer:
     lines = open('IPs.txt').read().splitlines()
     myline =random.choice(lines)
     self.sock.connect((myline.split(":")[0],9000))
-    self.sock.send(b'Send') #TODO: enviar que parte da blockchain vamos querer receber
+    self.sock.send(b'Send') 
     msg=self.sock.recv(1024)
     f=open("dummy_chain.txt",'wb')
     f.write(msg)

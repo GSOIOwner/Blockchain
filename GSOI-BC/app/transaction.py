@@ -1,9 +1,6 @@
-import wallet
-import json
-
 class Transaction:
     def __init__(self, fromAddress, toAddress, amount, timestamp=None,
-     originNode=None, hydrogen=None, units=None, workTime=None, upTime=None, signature=None):
+     originNode=None, hydrogen=None, units=None, workTime=None, upTime=None, signature=None, isStake = None):
         self.fromAddress = fromAddress
         self.toAddress = toAddress
         self.amount = amount
@@ -14,8 +11,7 @@ class Transaction:
         self.workTime = workTime
         self.upTime = upTime
         self.signature = signature
-        # Maybe create a becomingValidator here, so we know when it's a validators transaction (creation of a node).
-        #self.becomingValidator = becomingValidator
+        self.isStake = isStake 
 
     def to_dict(self):
         return {
@@ -28,6 +24,7 @@ class Transaction:
             'units' : self.units,
             'workTime' : self.workTime,
             'upTime' : self.upTime,
-            'signature' : self.signature
+            'signature' : self.signature,
+            'isStake' : self.isStake
         }
     

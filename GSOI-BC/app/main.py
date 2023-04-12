@@ -2,33 +2,40 @@ from cmd import PROMPT
 from fastapi import FastAPI, Request
 from starlette.responses import RedirectResponse
 from pydantic import BaseModel
+from typing import List
 import uvicorn 
-import blockchain
-import block
 import uuid
 import threading
 import json 
+
+import time
+import random
+import socket
+import os
+import requests
+import blockchain
+import block
+import node
 import wallet
 import transaction
 from transaction import Transaction
 import transactionPool
 import cryptoHash
 import peer_synchronizer
-import validator
-import time
-import random
-import socket
-import os
-import requests
-from typing import List
 
 app = FastAPI(openapi_schema={"openapi": "3.0.0", "arbitrary_types_allowed": True})
 
-max_socket=65000
+
+max_socket = 65000
 CurrentBlockchain = blockchain.Blockchain()
 currentTransacionPool = transactionPool.TransactionPool()
 
 nodeAddress = os.getenv('nodeAddress')
+nodeAPY = os.getenv('nodeAPY')
+nodeAmountStaked = os.getenv('nodeAmountStaked')
+
+currentNode = node.Node(nodeAddress, nodeAPY, 0, nodeAmountStaked)
+
 ownerAddress = wallet.getOwnerAddress()
 
 class TransactionFastAPI(BaseModel):
@@ -39,9 +46,10 @@ class TransactionFastAPI(BaseModel):
     originNode: str = None
     hydrogen: float = None
     units: str = None
-    workTime : float = None# in hours
+    workTime : float = None
     upTime : str = None
     signature: str 
+    isStake : bool = False
     
 class ValidatorFastAPI(BaseModel):
     address : str
@@ -74,7 +82,7 @@ def read_root(data: TransactionFastAPI):
 
     newTransaction = transaction.Transaction(data.fromAddress, data.toAddress,
      data.amount, data.timestamp, data.originNode, 
-     data.hydrogen, data.units, data.workTime, data.upTime, signature)
+     data.hydrogen, data.units, data.workTime, data.upTime, signature, data.isStake)
 
     currentTransacionPool.addTransaction(newTransaction)
     return RedirectResponse("/transactionPool", status_code=303)
@@ -85,7 +93,7 @@ def read_root():
 
 @app.get("/wallet-info")
 def read_root(address: str):
-    hasConductedTransaction = False
+    
     outputsTotal = 0
 
     for block in CurrentBlockchain.chain:
@@ -103,55 +111,17 @@ def read_root(address: str):
 
     return json
 
-# TODO:   
-# Este metodo desaparece, penso que pode é ser criado, como dito no Transaction.py, uma variavel no Transaction "BecomingValidator" para identificar que foi uma transação usada para se tornar validator/(nó).
-# Ficamos apenas assim com o método /transact
-
-@app.post("/becomeValidator")
-def read_root(data: ValidatorFastAPI):
-    # Entra na lista de validadores
-
-    # Criar metodo na middleware que devolve o owner address
-    newMsg = cryptoHash.CryptoHash.joinTransaction(data.address,
-     "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=",
-     data.amount)
-
-    signature = wallet.Owner.sign(newMsg, data.address)
-
-    newTransaction = transaction.Transaction(  fromAddress= data.address,
-    toAddress= "p5rZosydTkViWz9iGjs9lO+wGbly2f0VeoD09ReaqOw=",
-    amount= data.amount,
-    signature= signature)
-
-    currentTransacionPool.addTransaction(newTransaction)
-
-    ## Criar um objecto de validadores
-    newValidator = validator.Validator(data.address, data.amount)
-
-    ## Adicionar esse objecto a uma lista de validadores
-    #kafkaPublisher.publishKafkaValidatorNotVerified(newValidator)
-
-    return data
-
-# POST method to receive and update transaction pool
 @app.post('/api/transaction_pool')
 async def receiveTransactionPool(payload: TransactionPoolPayload):
-    print('Received Transaction Pool: ', payload.transaction_pool)
     new_transaction_pool = []
 
-    # Loop through each transaction in the payload and create a new Transaction object
     for transaction_data in payload.transaction_pool:
         transaction_dict = transaction_data.dict()
         new_transaction = transaction.Transaction(**transaction_dict)
         new_transaction_pool.append(new_transaction)
 
-    # Update the transaction pool with the new transactions
     currentTransactionPool = transactionPool.TransactionPool(new_transaction_pool)
 
-    # Verify the authenticity of the payload by checking the address
-    # ...
-
-    print('Going to validate Transactions')
     currentTransactionPool.validateTransactions(CurrentBlockchain, nodeAddress)
 
     return {'message': 'Transaction pool updated successfully'}
@@ -183,10 +153,14 @@ def read_root():
         peer.Send_last_block(os.getenv('IP'),9000)
         return 
 
+@app.post("/set_staking_percentage")
+def read_root(address: str, staking_percentage : int):
+    
+    if address == nodeAddress:
+        CurrentStakingPercentage = staking_percentage
 
-
-#y = threading.Thread(target=thread_chooseValidators, args=(), daemon=True)
-#y.start()
+    
+    return json
 
 def thread_send_blockchain_peers():
     server=peer_synchronizer.peer_synchronizer() 
@@ -206,62 +180,52 @@ def thread_send_blockchain_peers():
             f.close
             conn.close()
         if data==b'Update':
-            Already_exists=False
             msg=conn.recv(max_socket)
             f=open("dummy_chain.txt",'rb')
-            dummy_blockchain= json.load(f) # TODO: fazer a comparação do que recebemos com o que ja esta na chain, ver o codigo do jess
             f.close()
                        
-            msg=json.loads(msg.decode("utf-8"))
-            print("msg",flush=True)
+            msg = json.loads(msg.decode("utf-8"))
             timestamp = msg['timestamp']
             lastHash = msg['lastHash']
             hash = msg['hash']
             transactions_data = msg['transactions']
 
-            # create a list of Transaction objects
             transactions = []
             for transaction_data in transactions_data:
                 data_transaction = transaction.Transaction(**transaction_data)
                 transactions.append(data_transaction)
                 
-            # create a Block object
             block_msg = block.Block(timestamp, lastHash, hash, transactions)
             CurrentBlockchain.sync_block(block_msg)
             conn.close()
 
-def thread_choose_validator(): #TODO: complete i
-    print('Insine thread_choose_validator...', flush=True)
-
+def thread_choose_validator(): 
     while True:
-        print('Insine thread_choose_validator...', flush=True)
         if(len(currentTransacionPool.transaction_pool) > 0):
             lines = open('IPs.txt').read().splitlines()
             myline =random.choice(lines)
-            print('Choosen IP: ', myline, flush=True)
             transaction_pool = currentTransacionPool.to_dict()
-            print(transaction_pool, flush=True)
             headers = {'Content-Type': 'application/json'}
             r = requests.post(f'http://{myline}/api/transaction_pool', data=json.dumps(transaction_pool), headers=headers)
             return r.status_code == 200
 
         time.sleep(20)
 
-# TODO: Retirar Kafka, acho que isto até foi aqui posto só para termos logo um nó validador desde o inicio, que irá morrer
 def init():
     peer=peer_synchronizer.peer_synchronizer(os.getenv('IP'),os.getenv('Port'))
     peer.Save_IP()
     time.sleep(5)
     peer.Download_IP()
 
-    #peer.Download_blockchain()
     y = threading.Thread(target=thread_send_blockchain_peers, args=(), daemon=True)
     y.start()
 
     z = threading.Thread(target=thread_choose_validator, args=(), daemon=True)
     z.start()
-    #Get Owner Wallet Address
-    #Get Own Wallet Address
+
+    #TODO: Get Owner Wallet Address
+    #TODO: Get Own Wallet Address
+    
     
 init()
 

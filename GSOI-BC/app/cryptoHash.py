@@ -1,13 +1,9 @@
 from hashlib import sha256
 
 class CryptoHash:
-    def getHash(fromAddress, toAddress, amount, timestamp, originNode, 
-     hydrogen, units, workTime, upTime):
+    def getHash(fromAddress, toAddress, amount):
         
         transactionToString = CryptoHash.joinTransaction(fromAddress, toAddress, amount)
-        # TRY TO DO A JOIN(' ')
-        #print("Hash: " + transactionToString)
-        #hashSHA256 = SHA256.new(bytes(transactionToString,'utf-8'))
         hashSHA256 = sha256(transactionToString).hexdigest()
         print("hashSHA256: " + str(hashSHA256))
         

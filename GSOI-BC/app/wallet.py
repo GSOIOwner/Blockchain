@@ -1,4 +1,3 @@
-import binascii
 import requests
 
 class Owner:

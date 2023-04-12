@@ -27,7 +27,6 @@ class Block:
         for transaction in transactions:
             transactionToString += str(transaction.__dict__)
 
-        # TRY TO DO A JOIN(' ')
         hashed_string = hashlib.sha256(
             transactionToString.encode('utf-8')
             ).hexdigest()
@@ -57,11 +56,10 @@ class Block:
 
         newTransaction = transaction.Transaction(fromAddress="start",
         toAddress = ownerAddress, amount = 369369369,
-        signature = signature)
+        signature = signature, isStake=True)
 
         firstBlock = Block(datetime.now(), "lastHash", "hash-one", [newTransaction])
         
-        firstBlock_Json = firstBlock.toJson()
         list_firstBlock_Json=[firstBlock.toJson()]
         f=open("dummy_chain.txt", "ab")
         data = json.dumps(list_firstBlock_Json)

@@ -9,10 +9,8 @@ class Blockchain:
 
     def addBlock(self, transactions):
         newBlock = block.Block.createBlock(self.chain, transactions)
-        print(newBlock.__dict__)
         isValidBlock = block.Block.isValidBlock(self.chain, transactions, newBlock.hash)
-        print("Was Valid?", isValidBlock)
-        
+
         if isValidBlock:
             self.chain.append(newBlock)
             to_write_dummy_chain=[]
@@ -34,7 +32,6 @@ class Blockchain:
             f.write(data.encode("utf-8"))
         else:
             print("Block already exists!",flush=True)
-    # TODO: save blockchain
     
 
     
