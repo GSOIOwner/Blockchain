@@ -56,7 +56,7 @@ class Block:
 
         newTransaction = transaction.Transaction(fromAddress="start",
         toAddress = ownerAddress, amount = 369369369,
-        signature = signature, isStake=True)
+        signature = signature, isStake=False)
 
         firstBlock = Block(datetime.now(), "lastHash", "hash-one", [newTransaction])
         

@@ -30,8 +30,10 @@ class Blockchain:
             f=open("dummy_chain.txt", "wb")
             data = json.dumps(to_write_dummy_chain)
             f.write(data.encode("utf-8"))
+            return True
         else:
             print("Block already exists!",flush=True)
+            return False
     
 
     

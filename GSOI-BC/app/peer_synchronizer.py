@@ -19,11 +19,14 @@ class peer_synchronizer:
     self.connect_socket()
     MyIP = os.getenv('IP')
     myPort = os.getenv('API_PORT')
+    nodeAddress = os.getenv('nodeAddress')
     clientIP = MyIP+":"+myPort
     self.sock.connect(self.rendezvous)
     self.sock.send(b'Save_IP')
-    time.sleep(0.5)
+    time.sleep(1)
     self.sock.send(clientIP.encode('utf-8'))
+    time.sleep(1)
+    self.sock.send(nodeAddress.encode('utf-8'))
     self.sock.close()
     
   def Download_IP(self):

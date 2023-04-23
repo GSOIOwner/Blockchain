@@ -34,7 +34,7 @@ nodeAddress = os.getenv('nodeAddress')
 nodeAPY = os.getenv('nodeAPY')
 nodeAmountStaked = os.getenv('nodeAmountStaked')
 
-currentNode = node.Node(nodeAddress, nodeAPY, 0, nodeAmountStaked)
+currentNode = node.Node(uuid.getnode(), nodeAddress, nodeAPY, 0, nodeAmountStaked, 0, 0, 0)
 
 ownerAddress = wallet.getOwnerAddress()
 
@@ -122,9 +122,40 @@ async def receiveTransactionPool(payload: TransactionPoolPayload):
 
     currentTransactionPool = transactionPool.TransactionPool(new_transaction_pool)
 
-    currentTransactionPool.validateTransactions(CurrentBlockchain, nodeAddress)
+    print("Gonna validate transactions", flush=True)
+    validTransactions = currentTransactionPool.validateTransactions(CurrentBlockchain, nodeAddress)
+    
+    print("Gonna calculate the maxAmoutStaked", flush=True)
+    for validTransaction in validTransactions:
+        if validTransaction.isStake:
+            currentNode.maxAmountStaked += validTransaction.amount
+    
+    print("Gonna calculate the numberOfTransactions", flush=True)
+    currentNode.numberOfTransactions += len(validTransactions)
+    currentNode.maxTransations += len(validTransactions)
 
+    percentageAmount = float(currentNode.amountStaked) / float(currentNode.maxAmountStaked)
+    
+    percentageTransactions = float(currentNode.numberOfTransactions) / float(currentNode.maxTransations)
+    
+    print("Gonna calculate the stakingIndex", flush=True)
+    currentNode.stakingIndex = float(percentageAmount) - float(percentageTransactions)
+    print("StakingIndex ", currentNode.stakingIndex, flush=True)
+
+    print("Gonna send the last block", flush=True)
+    if len(validTransaction) > 0:
+        peer=peer_synchronizer.peer_synchronizer()
+        peer.Send_last_block(os.getenv('IP'),9000)
+    
     return {'message': 'Transaction pool updated successfully'}
+
+
+@app.get("/Save_IP")
+def read_root():
+    peer=peer_synchronizer.peer_synchronizer(os.getenv('IP'),os.getenv('Port'))
+    peer.Save_IP()
+    #idk se queres imprimir aqui algo tipo "done"
+    return 
 
 @app.get("/Save_IP")
 def read_root():
@@ -159,8 +190,16 @@ def read_root(address: str, staking_percentage : int):
     if address == nodeAddress:
         CurrentStakingPercentage = staking_percentage
 
-    
     return json
+
+@app.get("/api/getNode")
+def read_root():
+    return currentNode
+
+def get_node_with_highest_staking_index(nodes):
+    if not nodes:
+        return None
+    return max(nodes, key=lambda node: node.stakingIndex)
 
 def thread_send_blockchain_peers():
     server=peer_synchronizer.peer_synchronizer() 
@@ -196,18 +235,85 @@ def thread_send_blockchain_peers():
                 transactions.append(data_transaction)
                 
             block_msg = block.Block(timestamp, lastHash, hash, transactions)
-            CurrentBlockchain.sync_block(block_msg)
+            print("Gonna sync the block on this side...", flush=True)
+            wasAdded = CurrentBlockchain.sync_block(block_msg)
             conn.close()
+            
+            print("Was added?", wasAdded, flush=True)
+            if(wasAdded):
+                currentNode.maxTransations += len(transactions) 
+                for transactionToUpdate in transactions:
+                    if(transactionToUpdate.isStake):
+                        currentNode.maxAmountStaked += transactionToUpdate.amount
+                percentageAmount = float(currentNode.amountStaked) / float(currentNode.maxAmountStaked)
+                percentageTransactions = float(currentNode.numberOfTransactions) / float(currentNode.maxTransations)
+                currentNode.stakingIndex = float(percentageAmount) - float(percentageTransactions)
 
 def thread_choose_validator(): 
     while True:
+        
         if(len(currentTransacionPool.transaction_pool) > 0):
+
+            transactions = []
+            print("Looping for transactions with IsStake = True", flush=True)
+            # Loop through each block in the current blockchain's chain list
+            for block in CurrentBlockchain.chain:
+                # Loop through each transaction in the current block's transactions list
+                for transaction in block.transactions:
+                    print("Transaction " , transaction, flush=True)
+                    currentNode.maxTransations += len(block.transactions)
+                    if transaction.isStake:
+                        # Do something with the matching transaction object
+                        transactions.append(transaction)
+                        currentNode.maxAmountStaked += transaction.amount
+                        print("IsStake", flush=True)
+
+            if len(transactions) == 0:
+                print("There is no transactions with isStake, gonna use the owner address", flush=True)
+                ploads = {'address': ownerAddress}
+                print("Calling the API for the Owner IP Address Node", flush=True)
+                r = requests.get('https://host.docker.internal:7084/api/ClientIPAddress/GetClientIPAddress', params=ploads, verify=False)
+                print("Calling the API result...", r.status_code, flush=True)
+                ipAddress = r.text
+                print("IP Address...", ipAddress, flush=True)
+                transaction_pool = currentTransacionPool.to_dict()
+                headers = {'Content-Type': 'application/json'}
+                print("Sending Transaction Pool to ...", ipAddress, flush=True)
+                r = requests.post(f'http://{ipAddress}/api/transaction_pool', data=json.dumps(transaction_pool), headers=headers)
+                print(r.status_code == 200)
+                currentTransacionPool.clear()
+            
+            nodes = []
             lines = open('IPs.txt').read().splitlines()
-            myline =random.choice(lines)
-            transaction_pool = currentTransacionPool.to_dict()
-            headers = {'Content-Type': 'application/json'}
-            r = requests.post(f'http://{myline}/api/transaction_pool', data=json.dumps(transaction_pool), headers=headers)
-            return r.status_code == 200
+
+            if len(transactions) > 0:
+                sorted_transactions = sorted(transactions, key=lambda x: x.amount, reverse=True)
+
+                for transaction in sorted_transactions:
+                    print("Transaction with Stake found, lets ask for the nodes staking index to decide...", flush=True)
+                    for line in lines:
+                        print("IP...", line, flush=True)
+                        r = requests.get(f'http://{line}/api/getNode', verify=False)
+                        if r.status_code == 200:
+                            json_data = json.loads(r.content)
+                            responseNode = node.Node(**json_data)
+                            print(responseNode.uuid)
+                            print(responseNode.nodeAddress)
+                            print(responseNode.stakingIndex)
+                            nodes.append(responseNode)
+                
+                print("Finding the highest staking index node...", flush=True)
+                highest_staking_index_node = get_node_with_highest_staking_index(nodes)
+                ploads = { 'address': highest_staking_index_node.nodeAddress }
+                r = requests.get('https://host.docker.internal:7084/api/ClientIPAddress/GetClientIPAddress', params=ploads, verify=False)
+                ipAddress = r.text
+                print("Requested Ip Address to the API...", ipAddress, flush=True)
+                transaction_pool = currentTransacionPool.to_dict()
+                headers = {'Content-Type': 'application/json'}
+                print("Sending transaction pool...", ipAddress, flush=True)
+                r = requests.post(f'http://{ipAddress}/api/transaction_pool', data=json.dumps(transaction_pool), headers=headers)
+                print(r.status_code)
+                currentTransacionPool.clear()
 
         time.sleep(20)
 
