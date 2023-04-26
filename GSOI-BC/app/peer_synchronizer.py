@@ -23,9 +23,9 @@ class peer_synchronizer:
     clientIP = MyIP+":"+myPort
     self.sock.connect(self.rendezvous)
     self.sock.send(b'Save_IP')
-    time.sleep(1)
+    time.sleep(3)
     self.sock.send(clientIP.encode('utf-8'))
-    time.sleep(1)
+    time.sleep(3)
     self.sock.send(nodeAddress.encode('utf-8'))
     self.sock.close()
     

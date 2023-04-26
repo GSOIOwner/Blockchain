@@ -18,21 +18,21 @@ class TransactionPool:
     def clear(self):
         self.transaction_pool.clear()
 
-    def getTransactionForValidator(self, address):
+    def getTransactionForValidator(self, address, reward):
 
         if(len(self.transaction_pool) != 0):
             ownerAddress = wallet.getOwnerAddress()
             newMsg = cryptoHash.CryptoHash.joinTransaction(ownerAddress,
-             address, 50)
+             address, reward)
 
             signature = wallet.Owner.sign(newMsg, address)
 
             newTransaction = transaction.Transaction(fromAddress = ownerAddress,
-            toAddress = address, amount = 50, signature = signature, isStake=False)
+            toAddress = address, amount = reward, signature = signature, isStake=False)
             
             return newTransaction
 
-    def checkValidTransactions(self, address):
+    def checkValidTransactions(self, address, reward):
         print("Inside check valid transactions", flush=True)
         validTransactions = []
         for transaction in self.transaction_pool:
@@ -44,14 +44,14 @@ class TransactionPool:
                 print("Valid Transaction", flush=True)
                 validTransactions.append(transaction)
         
-        validatorTransaction = self.getTransactionForValidator(address)
+        validatorTransaction = self.getTransactionForValidator(address, reward)
         print("Got transaction for validator", flush=True)
         validTransactions.append(validatorTransaction)
         
         return validTransactions  
 
-    def validateTransactions(self, chain, address):
-        vTransactions = self.checkValidTransactions(address)
+    def validateTransactions(self, chain, address, reward):
+        vTransactions = self.checkValidTransactions(address, reward)
         chain.addBlock(vTransactions)
         self.transaction_pool = []
         return vTransactions

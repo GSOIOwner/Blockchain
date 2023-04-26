@@ -31,10 +31,10 @@ CurrentBlockchain = blockchain.Blockchain()
 currentTransacionPool = transactionPool.TransactionPool()
 
 nodeAddress = os.getenv('nodeAddress')
-nodeAPY = os.getenv('nodeAPY')
-nodeAmountStaked = os.getenv('nodeAmountStaked')
+nodeAPY = node.GetNodeAPY(nodeAddress)
+nodeAmountStaked = node.GetNodeAmountStaked(nodeAddress)
 
-currentNode = node.Node(uuid.getnode(), nodeAddress, nodeAPY, 0, nodeAmountStaked, 0, 0, 0)
+currentNode = node.Node(uuid.getnode(), nodeAddress, nodeAPY, 0, nodeAmountStaked, 0, 1, 0)
 
 ownerAddress = wallet.getOwnerAddress()
 
@@ -122,8 +122,14 @@ async def receiveTransactionPool(payload: TransactionPoolPayload):
 
     currentTransactionPool = transactionPool.TransactionPool(new_transaction_pool)
 
-    print("Gonna validate transactions", flush=True)
-    validTransactions = currentTransactionPool.validateTransactions(CurrentBlockchain, nodeAddress)
+    reward = 0
+
+    if currentNode.amountStaked and currentNode.nodeAPY:
+        reward = float(currentNode.amountStaked) * (1 + float(currentNode.nodeAPY)/100)**1 - float(currentNode.amountStaked)
+        print("Reward: ", reward)
+
+    print("Gonna validate transactions", flush=True) 
+    validTransactions = currentTransactionPool.validateTransactions(CurrentBlockchain, nodeAddress, reward)
     
     print("Gonna calculate the maxAmoutStaked", flush=True)
     for validTransaction in validTransactions:
@@ -134,19 +140,28 @@ async def receiveTransactionPool(payload: TransactionPoolPayload):
     currentNode.numberOfTransactions += len(validTransactions)
     currentNode.maxTransations += len(validTransactions)
 
-    percentageAmount = float(currentNode.amountStaked) / float(currentNode.maxAmountStaked)
+    percentageAmount = 0
+    percentageTransactions = 0
+
+    if currentNode.amountStaked and currentNode.maxAmountStaked:
+        percentageAmount = float(currentNode.amountStaked) / float(currentNode.maxAmountStaked)
     
-    percentageTransactions = float(currentNode.numberOfTransactions) / float(currentNode.maxTransations)
+    if currentNode.maxTransations and currentNode.numberOfTransactions:
+        percentageTransactions = float(currentNode.numberOfTransactions) / float(currentNode.maxTransations)
     
     print("Gonna calculate the stakingIndex", flush=True)
     currentNode.stakingIndex = float(percentageAmount) - float(percentageTransactions)
     print("StakingIndex ", currentNode.stakingIndex, flush=True)
 
     print("Gonna send the last block", flush=True)
-    if len(validTransaction) > 0:
-        peer=peer_synchronizer.peer_synchronizer()
-        peer.Send_last_block(os.getenv('IP'),9000)
-    
+    if len(validTransactions) > 0:
+        lines = open('IPs.txt').read().splitlines()
+        for line in lines:
+            ip_address = line.split(":")[0]
+            print(ip_address)
+            peer=peer_synchronizer.peer_synchronizer()
+            peer.Send_last_block(ip_address,9000)
+            
     return {'message': 'Transaction pool updated successfully'}
 
 
@@ -245,6 +260,8 @@ def thread_send_blockchain_peers():
                 for transactionToUpdate in transactions:
                     if(transactionToUpdate.isStake):
                         currentNode.maxAmountStaked += transactionToUpdate.amount
+                
+                
                 percentageAmount = float(currentNode.amountStaked) / float(currentNode.maxAmountStaked)
                 percentageTransactions = float(currentNode.numberOfTransactions) / float(currentNode.maxTransations)
                 currentNode.stakingIndex = float(percentageAmount) - float(percentageTransactions)
